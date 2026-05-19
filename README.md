@@ -20,6 +20,43 @@ The SEN204 course covered HTML, CSS, and JavaScript in the first weeks, then Rea
 4. The user can toggle a task as complete, edit its title, or delete it.
 5. The user can filter the list by All / Active / Completed.
 
+## Implementation Strategy
+
+### Backend
+
+The backend is a Django 5 project with one app called `api`. I chose Django REST Framework because it makes it straightforward to turn Django models into a JSON API without writing a lot of boilerplate.
+
+The `Task` model (`api/models.py`) stores the title, description, completion status, priority, due date, and creation timestamp. There is no user model — tasks are shared, which keeps the app simple.
+
+Views are written as plain functions using the `@api_view` decorator instead of class-based views. This makes it easier to read the logic top to bottom without jumping between methods. There are two view functions:
+- `task_list` handles `GET` (list all tasks, with optional `?completed=` filter) and `POST` (create a task).
+- `task_detail` handles `GET`, `PUT` (partial update), and `DELETE` for a single task.
+
+The `TaskSerializer` handles converting the model to and from JSON, and validates incoming data before it touches the database.
+
+URLs are defined in `api/urls.py` and included under `/api/` in the main `todoapi/urls.py`.
+
+### Frontend
+
+The frontend is a React 18 single-page app built with Vite. React Router handles navigation between the Dashboard and About pages. I kept it in plain JavaScript (no TypeScript) to stay close to what was taught in class.
+
+`api.js` is a small wrapper around the browser `fetch` API. Every request goes through `apiRequest()`, which sets the `Content-Type` header and throws an error with the response data attached if the server returns a non-OK status. This keeps the fetch logic in one place instead of repeating it in every component.
+
+`App.jsx` sets up the router and the shared navbar. The navbar is defined in the same file because it's small and only used in one place.
+
+`Dashboard.jsx` is the main page. It has three sections:
+- An add-task form with a title, notes, priority dropdown, and due date.
+- Filter buttons (All / Active / Completed) that re-fetch tasks from the API when clicked.
+- The task list, where each item shows the priority badge, due date, and edit / delete buttons. Clicking Edit switches the title to an inline text input; pressing Enter or clicking Save sends a `PUT` request.
+
+All styles are in a single `App.css` file using plain CSS. The dark colour scheme (#1a1a1a background, #4a90d9 accent) matches the v1 project.
+
+### Docker
+
+Each service has its own Dockerfile. The backend image installs Python dependencies and runs `migrate` then `runserver` on startup. The frontend image installs Node dependencies, builds the static files with `npm run build`, and serves them with `npm run preview`.
+
+`VITE_API_URL` is passed as a Docker build argument so the frontend knows where to send API requests. In the Docker Compose setup this is set to `http://localhost:8000/api`.
+
 ## Tech Stack
 
 - **Frontend**: React 18, React Router, Vite, plain JavaScript
