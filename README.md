@@ -34,79 +34,31 @@ Views are written as plain functions using the `@api_view` decorator instead of 
 
 The `TaskSerializer` handles converting the model to and from JSON, and validates incoming data before it touches the database.
 
-URLs are defined in `api/urls.py` and included under `/api/` in the main `todoapi/urls.py`.
-
 ### Frontend
 
-The frontend is a React 18 single-page app built with Vite. React Router handles navigation between the Dashboard and About pages. I kept it in plain JavaScript (no TypeScript) to stay close to what was taught in class.
+The frontend is a React 18 single-page app built with Vite. React Router handles navigation between the Dashboard and About pages. I kept it in plain JavaScript to stay close to what was taught in class.
 
-`api.js` is a small wrapper around the browser `fetch` API. Every request goes through `apiRequest()`, which sets the `Content-Type` header and throws an error with the response data attached if the server returns a non-OK status. This keeps the fetch logic in one place instead of repeating it in every component.
+`api.js` is a small wrapper around the browser `fetch` API. Every request goes through `apiRequest()`, which sets the `Content-Type` header and throws an error if the server returns a non-OK status. This keeps the fetch logic in one place instead of repeating it in every component.
 
-`App.jsx` sets up the router and the shared navbar. The navbar is defined in the same file because it's small and only used in one place.
-
-`Dashboard.jsx` is the main page. It has three sections:
-- An add-task form with a title, notes, priority dropdown, and due date.
-- Filter buttons (All / Active / Completed) that re-fetch tasks from the API when clicked.
-- The task list, where each item shows the priority badge, due date, and edit / delete buttons. Clicking Edit switches the title to an inline text input; pressing Enter or clicking Save sends a `PUT` request.
-
-All styles are in a single `App.css` file using plain CSS. The dark colour scheme (#1a1a1a background, #4a90d9 accent) matches the v1 project.
+`App.jsx` sets up the router and the shared navbar. `Dashboard.jsx` is the main page — it has an add-task form, filter buttons (All / Active / Completed), and the task list. Clicking Edit on a task switches the title to an inline input; pressing Enter or clicking Save sends a `PUT` request. All styles live in a single `App.css` file.
 
 ### Docker
 
-Each service has its own Dockerfile. The backend image installs Python dependencies and runs `migrate` then `runserver` on startup. The frontend image installs Node dependencies, builds the static files with `npm run build`, and serves them with `npm run preview`.
+Each service has its own Dockerfile. The backend image installs Python dependencies and runs `migrate` then `runserver` on startup. The frontend image builds the static files with `npm run build` and serves them with `npm run preview`. `VITE_API_URL` is passed as a build argument so the frontend knows where to reach the API.
 
-`VITE_API_URL` is passed as a Docker build argument so the frontend knows where to send API requests. In the Docker Compose setup this is set to `http://localhost:8000/api`.
+## Setup and Usage
 
-## Tech Stack
-
-- **Frontend**: React 18, React Router, Vite, plain JavaScript
-- **Backend**: Django 5, Django REST Framework
-- **Database**: SQLite
-- **Containers**: Docker, Docker Compose
-
-## Project Structure
-
-```
-todo-list-v2/
-├── backend/
-│   ├── api/               # Django app (models, views, serializers)
-│   ├── todoapi/           # Django project settings
-│   ├── manage.py
-│   ├── requirements.txt
-│   └── Dockerfile
-├── frontend/
-│   ├── src/
-│   │   ├── pages/         # Dashboard, About
-│   │   ├── App.jsx
-│   │   ├── App.css
-│   │   ├── api.js
-│   │   └── main.jsx
-│   ├── package.json
-│   ├── vite.config.js
-│   └── Dockerfile
-├── docker-compose.yml
-└── README.md
-```
-
-## Run with Docker (recommended)
+### Run with Docker (recommended)
 
 ```bash
 docker compose up --build
 ```
 
-Then open:
-- Frontend: http://localhost:5173
-- Backend API: http://localhost:8000/api/
+Open http://localhost:5173 in the browser. To stop: `docker compose down`.
 
-To stop:
-```bash
-docker compose down
-```
+### Run locally
 
-## Run locally (without Docker)
-
-### Backend
-
+**Backend:**
 ```bash
 cd backend
 python -m venv venv
@@ -116,31 +68,11 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-### Frontend
-
+**Frontend** (in a separate terminal):
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-Then open http://localhost:5173.
-
-## API Endpoints
-
-| Method | URL                    | Description                  |
-| ------ | ---------------------- | ---------------------------- |
-| GET    | `/api/tasks/`          | List tasks                   |
-| POST   | `/api/tasks/`          | Create a task                |
-| PUT    | `/api/tasks/<id>/`     | Update a task                |
-| DELETE | `/api/tasks/<id>/`     | Delete a task                |
-
-The `/api/tasks/` endpoint accepts `?completed=true` or `?completed=false` to filter by status.
-
-## What's new compared to v1
-
-- Multiple pages instead of one (Dashboard, About).
-- Real database (SQLite) instead of browser `localStorage`.
-- Each task has a priority (low / medium / high) and an optional due date.
-- Filter buttons for All / Active / Completed tasks.
-- Runs in Docker with a single command.
+Open http://localhost:5173.
